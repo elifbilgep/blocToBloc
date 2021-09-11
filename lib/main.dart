@@ -1,61 +1,47 @@
 import 'package:flutter/material.dart';
-import 'dart:async';
+import 'package:stream_counter/logic/cubit/counter_cubit.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:stream_counter/presentation/router/app_router.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
-void main() => runApp(MyApp());
+import 'logic/cubit/internet_cubit.dart';
+
+void main() {
+  runApp(MyApp(
+    appRouter: AppRouter(),
+    connectivity: Connectivity(),
+  ));
+}
 
 class MyApp extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'Stream Ile Counter',
-      theme: ThemeData(
-        primarySwatch: Colors.indigo,
-      ),
-      home: CounterPage(),
-    );
-  }
-}
+  final AppRouter appRouter;
+  final Connectivity connectivity;
 
-class CounterPage extends StatefulWidget {
-  // Statefull widget kullanmamızdaki tek amaç kullanımı tamamlandıktan sonra stream'i kapatmak dispose metodunu çağırabilmek
-  @override
-  _CounterPageState createState() => _CounterPageState();
-}
-
-class _CounterPageState extends State<CounterPage> {
-  int _counter = 0;
-  final StreamController<int> _streamController = StreamController<
-      int>(); // akışı kontrol edebileceğimiz bir controller tanımlıyoruz ve akıştaki veri türünün integer olduğunu söylüyoruz
-
-  @override
-  void dispose() {
-    _streamController.close(); //kapatmayı unutmmamalıyız
-    super.dispose();
-  }
+  const MyApp({
+    Key key,
+    @required this.appRouter,
+    @required this.connectivity,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text('Stream Ile Counter')),
-      body: Center(
-        child: StreamBuilder<int>(
-            //Stream'i dinleyerek akıştan çıkan her yeni veriyi Text wigetını güncelleyerek yansıtıyoruz.
-            stream: _streamController
-                .stream, //StreamController ile stream'e ulaşıyoruz
-            initialData: _counter,
-            builder: (BuildContext context, AsyncSnapshot<int> snapshot) {
-              //builder içerisindeki snapshot parametresiyle akışımızdan çıka son verinin değerini Text widgetında yansıtıyoruz.
-              return Text('Sayaç: ${snapshot.data}');
-            }),
-      ),
-      floatingActionButton: FloatingActionButton(
-        child: const Icon(Icons.add),
-        onPressed: () {
-          _streamController.sink.add(
-              ++_counter); //FloatingActionButton'a bastığımızda counter değerinin bir artmış olarak sink sayesinde akışa yoluyoruz. 
-              //Stram'e yeni bir veri girişi akışı dinleyen StreamBuilder'ın widgetı yeni değeriyle beraber tekrar build etmesini sağlıyor.
-        },
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider<InternetCubit>(
+          create: (context) => InternetCubit(connectivity: connectivity),
+        ),
+        BlocProvider<CounterCubit>(
+          create: (context) => CounterCubit(),
+        ),
+      ],
+      child: MaterialApp(
+        debugShowCheckedModeBanner: false,
+        title: 'Flutter Demo',
+        theme: ThemeData(
+          primarySwatch: Colors.blue,
+          visualDensity: VisualDensity.adaptivePlatformDensity,
+        ),
+        onGenerateRoute: appRouter.onGenerateRoute,
       ),
     );
   }
