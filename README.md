@@ -1,3 +1,3 @@
-# stream_counter
+# Bloc To Bloc 
 
-Counter App'in stream ile yapımı
+MultiBlocProvider, BlocListener, BlocBuilder, BlocConsumer, GeneratedRouteAccess, GlobalAccess, BlocToBloc
